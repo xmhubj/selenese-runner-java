@@ -1,12 +1,21 @@
 package jp.vmi.selenium.selenese.utils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * Utililities for Selenium.
+ * Utilities for Selenium.
  */
 public class SeleniumUtils {
 
@@ -94,13 +103,14 @@ public class SeleniumUtils {
          * @return true if matched.
          */
         public boolean matches(String input) {
+            input = normalizeSpaces(input);
             switch (type) {
             case REGEXP:
             case REGEXPI:
             case GLOB:
                 return regexpPattern.matcher(input).find();
             case EXACT:
-                return stringPattern.equals(input);
+                return normalizeSpaces(stringPattern).equals(input);
             default:
                 throw new UnsupportedOperationException(type.toString());
             }
@@ -108,7 +118,7 @@ public class SeleniumUtils {
 
         @Override
         public String toString() {
-            return "SeleniumPattern[" + type + ":" + stringPattern + "]";
+            return "SeleniumPattern[" + type + ":" + StringEscapeUtils.escapeJava(stringPattern) + "]";
         }
     }
 
@@ -121,6 +131,37 @@ public class SeleniumUtils {
      */
     public static boolean patternMatches(String pattern, CharSequence input) {
         return new SeleniumPattern(pattern).matches(input.toString());
+    }
+
+    /**
+     * Unifty U+0020 and U+00A0, Trim, and compress spaces in string.
+     *
+     * @param str string.
+     * @return normalized string.
+     */
+    public static String normalizeSpaces(String str) {
+        int si = str.indexOf(' ');
+        int ni = str.indexOf('\u00A0');
+        if (si < 0 && ni < 0)
+            return str;
+        int len = str.length();
+        StringBuilder buf = new StringBuilder(len);
+        boolean skipSpc = true;
+        for (int i = 0; i < len; i++) {
+            char c = str.charAt(i);
+            if (c != ' ' && c != '\u00A0') {
+                buf.append(c);
+                skipSpc = false;
+            } else if (!skipSpc) {
+                buf.append(' ');
+                skipSpc = true;
+            }
+            // skip if skipSpc && (c == ' ' || c == '\u00A0)
+        }
+        int blen = buf.length();
+        if (blen > 0 && buf.charAt(blen - 1) == ' ')
+            buf.deleteCharAt(blen - 1);
+        return buf.toString();
     }
 
     /**
@@ -153,5 +194,43 @@ public class SeleniumUtils {
     @Deprecated
     public static boolean isJava7orLater() {
         return true;
+    }
+
+    private static final Pattern BEGIN_RE = Pattern.compile("function\\s+(?<name>\\w+)\\(.*?\\)\\s*\\{\\s*//\\s*BEGIN\\s*");
+    private static final Pattern END_RE = Pattern.compile("\\}\\s*//\\s*END\\s*");
+
+    /**
+     * Load JavaScript and put each function to map.
+     * @param is InputStream.
+     * @return map of function name and body.
+     */
+    public static Map<String, String> loadJS(InputStream is) {
+        BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+        Map<String, String> result = new HashMap<>();
+        String line;
+        String name = null;
+        StringBuilder body = null;
+        try {
+            while ((line = br.readLine()) != null) {
+                if (name == null) {
+                    Matcher matcher = BEGIN_RE.matcher(line);
+                    if (matcher.matches()) {
+                        name = matcher.group("name");
+                        body = new StringBuilder();
+                    }
+                } else {
+                    if (END_RE.matcher(line).matches()) {
+                        result.put(name, body.toString());
+                        name = null;
+                        body = null;
+                    } else {
+                        body.append(line.trim()).append('\n');
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
     }
 }

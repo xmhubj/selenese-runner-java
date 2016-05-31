@@ -1,12 +1,44 @@
 Selenese Runner Java Relase Note
 ================================
 
+### 2.7.0
+
+* Re-enabled alert/confirm commands because Selenium supported the feature with `localStorage`. (#32)
+* Add new supported commands for prompt. (#192)
+    * `answerOnNextPrompt`
+    * `assertNotPrompt`
+    * `assertPrompt`
+    * `assertPromptNotPresent`
+    * `assertPromptPresent`
+    * `storePrompt`
+    * `storePromptPresent`
+    * `verifyNotPrompt`
+    * `verifyPrompt`
+    * `verifyPromptNotPresent`
+    * `verifyPromptPresent`
+    * `waitForNotPrompt`
+    * `waitForPrompt`
+    * `waitForPromptNotPresent`
+    * `waitForPromptPresent`
+* Add new command: `include`. (PR #193 by @RLasinski)
+* Re-fix white space normalizing. (#195)
+* Update dependency versions.
+
+### 2.6.0
+
+* Catch up Selenium 2.53.0.
+* Update dependency versions.
+* Refine code.
+* Re-implement the test web server.
+* Add initialization of pageLoadTimeout. (#190)
+* Add white space normalizing. (#191)
+
 ### 2.5.0
 
+* Replace command line arguments parser from commons-cli to args4j. **Note:** There are too many changes in `IConfig`, `DefaultConfig`, and `SeleneseRunnerOptions` classes.
 * Refine code. (PR #185, #187 by AymanDF)
 * Update dependency versions.
 * Add utility script.
-* Replace command line arguments parser from commons-cli to args4j. Note: There are too many changes in `IConfig`, `DefaultConfig`, and `SeleneseRunnerOptions` classes.
 
 ### 2.4.0
 

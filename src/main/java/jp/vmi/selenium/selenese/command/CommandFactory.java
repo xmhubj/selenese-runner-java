@@ -72,6 +72,9 @@ public class CommandFactory implements ICommandFactory {
 
         // commands for comment
         addConstructor(Comment.class);
+
+        // commands for include
+        addConstructor(Include.class);
     }
 
     private static final String AND_WAIT = "AndWait";
@@ -179,14 +182,6 @@ public class CommandFactory implements ICommandFactory {
         ISubCommand<?> subCommand = subCommandMap.get(realName);
         if (subCommand != null)
             return new BuiltInCommand(index, name, args, subCommand, andWait);
-
-        // FIXME #32 workaround alert command handling.
-        if (realName.matches("(?i)(?:assert|verify|waitFor)(?:Alert|Confirmation|Prompt)(?:(?:Not)?Present)?")) {
-            StringBuilder echo = new StringBuilder(name);
-            for (String arg : args)
-                echo.append(" ").append(arg);
-            return new Echo(index, name, echo.toString());
-        }
 
         // See: http://selenium.googlecode.com/svn/trunk/ide/main/src/content/selenium-core/reference.html
         // Assertion or Accessor

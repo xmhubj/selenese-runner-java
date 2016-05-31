@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,8 +13,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import org.apache.commons.collections.Closure;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -25,8 +24,7 @@ import com.thoughtworks.selenium.SeleniumException;
 public class RollupRules {
 
     private static enum EngineType {
-        RHINO("Rhino"),
-        NASHORN("Nashorn");
+        RHINO("Rhino"), NASHORN("Nashorn");
 
         public final String engineName;
 
@@ -70,16 +68,16 @@ public class RollupRules {
      * @param is InputStream object.
      */
     public void load(final InputStream is) {
-        RollupManager.rollupRulesContext(this, new Closure() {
+        RollupManager.rollupRulesContext(this, new Runnable() {
             @Override
-            public void execute(Object input) {
+            public void run() {
                 Reader r = null;
                 try {
                     String packageName = RollupManager.class.getPackage().getName();
                     if (engineType == EngineType.NASHORN)
                         engine.eval("load('nashorn:mozilla_compat.js');");
                     engine.eval("importPackage(Packages." + packageName + ");");
-                    r = new InputStreamReader(is, Charsets.UTF_8);
+                    r = new InputStreamReader(is, StandardCharsets.UTF_8);
                     engine.eval(r);
                 } catch (ScriptException e) {
                     throw new SeleniumException(e);
